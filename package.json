@@ -1,9 +1,9 @@
 {
   "name": "upload-server",
   "version": "1.0.0",
-  "main": "app.js",
+  "main": "main.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node main.js"
   },
   "dependencies": {
     "express": "^4.17.1",
