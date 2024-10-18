@@ -50,7 +50,7 @@
         const loadingElement = document.getElementById('loading');
         const fallbackImage = 'https://via.placeholder.com/150?text=Image+Not+Available'; 
 
-        const socket = io('http://localhost:5000');  // Connect to the Socket.IO server
+        const socket = io('https://kevinapp.onrender.com/');  // Connect to the Socket.IO server
 
         // Listen for the 'new-image' event
         socket.on('new-image', function(imageUrl) {
