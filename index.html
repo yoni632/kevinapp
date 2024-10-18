@@ -4,125 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload Menu Photos</title>
-    <style>
-        .preview-container {
-            display: flex;
-            align-items: center;
-        }
-        .preview {
-            width: 480px; /* Increased size */
-            height: 270px; /* Increased size */
-            border: 2px solid #ddd;
-            border-radius: 4px;
-            object-fit: contain;
-        }
-        .nav-button {
-            background-color: #444;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            margin: 0 10px;
-        }
-        .nav-button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        .counter {
-            color: black;
-            font-size: 18px;
-            margin: 0 10px;
-        }
-    </style>
 </head>
 <body>
     <h1>Upload Your Menu Photos (JPEG, PNG, SVG)</h1>
     <form id="uploadForm" enctype="multipart/form-data">
-        <input type="file" id="photoInput" accept="image/jpeg,image/png,image/svg+xml" multiple>
+        <input type="file" id="photoInput" accept="image/*,.svg">
         <button type="button" onclick="uploadPhotos()">Upload</button>
     </form>
-    <div id="progress"></div>
-    <div class="preview-container">
-        <button class="nav-button" id="prevBtn" onclick="prevImage()">Prev</button>
-        <img id="preview" class="preview">
-        <span class="counter" id="counter"></span>
-        <button class="nav-button" id="nextBtn" onclick="nextImage()">Next</button>
-    </div>
+
     <script>
-        let currentIndex = 0;
-        let files = [];
-        document.getElementById('photoInput').addEventListener('change', function(event) {
-            files = event.target.files;
-            if (files.length > 0) {
-                currentIndex = 0;
-                showPreview(currentIndex);
-            }
-        });
-
-        function showPreview(index) {
-            const file = files[index];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('preview').src = e.target.result;
-                updateNavButtons();
-                updateCounter();
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function nextImage() {
-            currentIndex = (currentIndex + 1) % files.length;
-            showPreview(currentIndex);
-        }
-
-        function prevImage() {
-            currentIndex = (currentIndex - 1 + files.length) % files.length;
-            showPreview(currentIndex);
-        }
-
-        function updateNavButtons() {
-            document.getElementById('prevBtn').disabled = files.length <= 1;
-            document.getElementById('nextBtn').disabled = files.length <= 1;
-        }
-
-        function updateCounter() {
-            document.getElementById('counter').textContent = `${currentIndex + 1} / ${files.length}`;
-        }
-
         function uploadPhotos() {
-            if (files.length === 0) {
+            const input = document.getElementById('photoInput');
+            const files = input.files;
+
+            if (files.length > 0) {
+                const formData = new FormData();
+                formData.append('photo', files[0]); // Append the selected file
+
+                // Make the POST request to your live Render server
+                fetch('https://your-app-name.onrender.com/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('File uploaded successfully:', data);
+                    alert('File uploaded! URL: ' + data.filepath);
+                })
+                .catch(error => console.error('Error during upload:', error));
+            } else {
                 alert('Please select a file to upload.');
-                return;
             }
-            const formData = new FormData();
-            for (let i = 0; i < files.length; i++) {
-                formData.append('photos[]', files[i]);
-            }
-            const progressDiv = document.getElementById('progress');
-            progressDiv.innerHTML = 'Uploading...';
-            fetch('http://localhost:5000/upload', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok: ' + response.statusText);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.filepaths) {
-                    localStorage.setItem('latestUploadedPhotos', JSON.stringify(data.filepaths));
-                    progressDiv.innerHTML = 'Upload successful!';
-                } else {
-                    alert('Error uploading files: ' + data.message);
-                    progressDiv.innerHTML = '';
-                }
-            })
-            .catch(error => {
-                console.error('Error during upload:', error);
-                progressDiv.innerHTML = 'Upload failed. Please try again.';
-            });
         }
     </script>
 </body>
