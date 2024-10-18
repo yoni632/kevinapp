@@ -1,4 +1,3 @@
-// app.js (Node.js with Express and Socket.IO)
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -9,15 +8,14 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server); // Initialize Socket.IO
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;  // Render dynamically assigns PORT
 
 app.use(cors({
-    origin: '*', // Allow all origins
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type'],
 }));
 
-// Configure Multer for file uploads
 const storage = multer.diskStorage({
     destination: './uploads/',
     filename: (req, file, cb) => {
@@ -27,13 +25,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 5MB file size limit
-}).single('photo');  // Accept a single file under the field name 'photo'
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
+}).single('photo');
 
 // Serve static files from the uploads directory
 app.use('/uploads', express.static('uploads'));
 
-// Handle file uploads and notify all connected clients of the new image
 app.post('/upload', (req, res) => {
     upload(req, res, function (err) {
         if (err instanceof multer.MulterError) {
@@ -43,9 +40,8 @@ app.post('/upload', (req, res) => {
         }
 
         if (req.file) {
-            const imageUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+            const imageUrl = `http://${req.hostname}:${PORT}/uploads/${req.file.filename}`;
 
-            // Notify all connected clients about the new image
             io.emit('new-image', imageUrl);
 
             return res.json({ filepath: imageUrl });
